@@ -16,7 +16,6 @@ class BudgetItem:
     return dump_str
 
   def from_str(self,string_in):
-    pdb.set_trace()
     split = string_in.split(',')
     self.item_name = split[0]
     self.price = split[1]
