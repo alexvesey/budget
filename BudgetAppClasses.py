@@ -16,6 +16,7 @@ class BudgetItem:
     return dump_str
 
   def from_str(self,string_in):
+    pdb.set_trace()
     split = string_in.split(',')
     self.item_name = split[0]
     self.price = split[1]
@@ -31,24 +32,21 @@ class Database:
   
   def SaveToFile(self):
     with open('BudgetDB.csv', 'w') as out_file:
-      self.data_frame.to_csv(out_file)
+      self.data_frame.to_csv(out_file, index= False)
 
   def LoadFromFile(self):
     try:
-      with open('BudgetDB.csv', 'w') as in_file:
-        pdb.set_trace()
-        self.data_frame = pd.read_csv(in_file) 
+        self.data_frame = pd.read_csv('BudgetDB.csv') 
         return self.data_frame
     except:
       print("No DB yet setup, creating new DB")
-      col_names = ["User","Item Name","Price","Date of Purchase","Budget Category","Decription"]
+      col_names = ["User","Item Name","Price","Date of Purchase","Budget Category","Description"]
       self.data_frame = pd.DataFrame(columns= col_names)
       return self.data_frame
 
   def SaveItem(self,bi):
-    pdb.set_trace()
     self.data_frame = self.data_frame.append({'User': bi.user, 'Item Name':bi.item_name, 'Price': \
-                                              bi.price, 'Date Of Purchace': bi.date, 'Category': \
+                                              bi.price, 'Date of Purchace': bi.date, 'Budget Category': \
                                               bi.category, 'Description': bi.description}, ignore_index = True)
 #----------------------------------------------------------------------------------------------------------------
 class CmdPrompt(Cmd):
