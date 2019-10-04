@@ -1,4 +1,5 @@
 from cmd import Cmd
+from tabulate import tabulate
 import pandas as pd
 import pdb
 #---------------------------------------------------------------------------------------------------------------
@@ -45,8 +46,10 @@ class Database:
 
   def SaveItem(self,bi):
     self.data_frame = self.data_frame.append({'User': bi.user, 'Item Name':bi.item_name, 'Price': \
-                                              bi.price, 'Date of Purchace': bi.date, 'Budget Category': \
+                                              bi.price, 'Date of Purchase': bi.date, 'Budget Category': \
                                               bi.category, 'Description': bi.description}, ignore_index = True)
+  def PrintWholeDB(self):
+    print(tabulate(self.data_frame, headers='keys',tablefmt='psql' ))
 #----------------------------------------------------------------------------------------------------------------
 class CmdPrompt(Cmd):
   def __init__(self):
@@ -54,24 +57,31 @@ class CmdPrompt(Cmd):
     self.database = Database()
     self.current_user = ''
   prompt = 'Budget>>'
-  intro = "Start by entering 'load' <your name>"
+  intro = "Start by entering 'login' <your name>"
 
   def do_exit(self, inp):
     self.database.SaveToFile()
     print('Goodbye!')
     return True
 
-  def do_load(self, inp):
-    self.database= Database()
-    self.database.LoadFromFile()
-    self.current_user = inp 
-    print("welcome '{}'".format(inp))
+  def do_login(self, inp):
+    if (inp == ''):
+      print("Enter a username!")
+    else:
+      self.database= Database()
+      self.database.LoadFromFile()
+      self.current_user = inp.lower()  
+      print("welcome '{}'".format(inp))
 
   def do_add(self, inp):
     budget_item = BudgetItem()
     inp = inp+","+self.current_user
     budget_item.from_str(inp)
     self.database.SaveItem(budget_item)
+
+  def do_print(self, inp):
+    if (inp == ''):
+      self.database.PrintWholeDB()
 #-----------------------------------------------------------------------------------------------------------------
 
 
