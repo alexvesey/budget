@@ -1,73 +1,87 @@
 from cmd import Cmd
-import json
+from tabulate import tabulate
+import pandas as pd
+import pdb
 #---------------------------------------------------------------------------------------------------------------
 class BudgetItem:
-  def __init__(self,price,date,category,description):
-    self.price = price
-    self.date = date
-    self.category = category
-    self.description = description 
+  def __init__(self,):
+    self.user = ''
+    self.item_name = ''
+    self.price = ''
+    self.date = ''
+    self.category = ''
+    self.description = ''
 
-  def dump(self):
-    dump_dict = {"price":self.price, "date":self.date,"category":self.category,"description": self.description}
-    return str(dump_dict) 
+  def to_str(self):
+    dump_str = self.user+" "+self.item_name+" "+self.price+" "+self.date +" "+self.category+" "+self.description
+    return dump_str
+
+  def from_str(self,string_in):
+    split = string_in.split(',')
+    self.item_name = split[0]
+    self.price = split[1]
+    self.date = split[2]
+    self.category = split[3]
+    self.description = split[4]
+    self.user = split[5]
 
 #---------------------------------------------------------------------------------------------------------------
 class Database:
-  def __init__(self,json_data):
-    self.json_data = json_data
+  def __init__(self):
+    self.data_frame = pd.DataFrame()
   
-  def SaveData(self):
-    with open('BudgetDB.json', 'w') as json_file:
-      json_file.write(json.dumps(self.json_data, indent=2, sort_keys=True))
+  def SaveToFile(self):
+    with open('BudgetDB.csv', 'w') as out_file:
+      self.data_frame.to_csv(out_file, index= False)
 
-  def LoadData(name):
+  def LoadFromFile(self):
     try:
-      with open('BudgetDB.json', 'w') as json_file:
-        db = Database(json.load(json_file))
-        db.SetCurrentUser(name)
-        return db
+        self.data_frame = pd.read_csv('BudgetDB.csv') 
+        return self.data_frame
     except:
       print("No DB yet setup, creating new DB")
-      db = Database({name:{}})
-      return db
+      col_names = ["User","Item Name","Price","Date of Purchase","Budget Category","Description"]
+      self.data_frame = pd.DataFrame(columns= col_names)
+      return self.data_frame
 
-  def SaveItem(self,item, current_user):
-    current_num_items = len(self.json_data[current_user].keys())
-    next_item_num = current_num_items+1
-
-    pair_key = 'item'+ next_item_num
-    self.json_data[current_user][pair_key] = item
+  def SaveItem(self,bi):
+    self.data_frame = self.data_frame.append({'User': bi.user, 'Item Name':bi.item_name, 'Price': \
+                                              bi.price, 'Date of Purchase': bi.date, 'Budget Category': \
+                                              bi.category, 'Description': bi.description}, ignore_index = True)
+  def PrintWholeDB(self):
+    print(tabulate(self.data_frame, headers='keys',tablefmt='psql' ))
 #----------------------------------------------------------------------------------------------------------------
 class CmdPrompt(Cmd):
   def __init__(self):
     Cmd.__init__(self)
-    self.database = Database({})
+    self.database = Database()
     self.current_user = ''
   prompt = 'Budget>>'
-  intro = "Start by entering 'load' <your name>"
-
+  intro = "Start by entering 'login' <your name>"
 
   def do_exit(self, inp):
-    self.database.SaveData()
+    self.database.SaveToFile()
     print('Goodbye!')
     return True
 
-  def help_exit(self):
-    print("exit the app")
+  def do_login(self, inp):
+    if (inp == ''):
+      print("Enter a username!")
+    else:
+      self.database= Database()
+      self.database.LoadFromFile()
+      self.current_user = inp.lower()  
+      print("welcome '{}'".format(inp))
 
-  def do_add_item(self, inp):
-    inp = inp.split()
+  def do_add(self, inp):
+    budget_item = BudgetItem()
+    inp = inp+","+self.current_user
+    budget_item.from_str(inp)
+    self.database.SaveItem(budget_item)
 
-    item = {"name": inp[0], "date": inp[1], "category":inp[2], "decription":inp[3]}   
-
-    self.database.AddItem(item, current_user) 
-  
-  def do_load(self, inp):
-    self.database= Database.LoadData(inp)
-    self.current_user = inp 
-    print("welcome '{}'".format(inp))
-
+  def do_print(self, inp):
+    if (inp == ''):
+      self.database.PrintWholeDB()
 #-----------------------------------------------------------------------------------------------------------------
 
 
